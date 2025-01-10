@@ -1,0 +1,140 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  email     String   @unique
+  password  String
+  fullName  String?
+  phone     String?
+  address   String?
+  birthDate DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  profile   UserProfile?
+  sessions  Session[]
+  wallets   Wallet[]
+  events    Event[]
+  tickets   Ticket[]
+  notifications Notification[]
+}
+
+model UserProfile {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @unique
+  avatarUrl  String?
+  bio        String?
+  preferences Json?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Relations
+  user       User     @relation(fields: [userId], references: [id])
+}
+
+model Session {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Wallet {
+  id         Int      @id @default(autoincrement())
+  userId     Int      
+  walletType String   // 'Rendi Pay', 'Dinda Pay', 'Erwin Pay'
+  balance    Decimal  @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+ 
+  // Relations
+  user       User     @relation(fields: [userId], references: [id])
+  transactions Transaction[]
+
+  // Composite unique constraint untuk userId dan walletType
+  @@unique([userId, walletType])
+}
+
+model Transaction {
+  id            Int      @id @default(autoincrement())
+  walletId      Int
+  amount        Decimal
+  type          String   // 'TOPUP', 'PAYMENT', 'TRANSFER', 'REFUND'
+  status        String   // 'SUCCESS', 'PENDING', 'FAILED'
+  referenceId   String?  // ID referensi untuk tiket atau event
+  description   String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  wallet        Wallet   @relation(fields: [walletId], references: [id])
+}
+
+model Event {
+  id          Int      @id @default(autoincrement())
+  name        String
+  type        String
+  date        DateTime
+  time        String
+  location    String
+  description String
+  posterUrl   String?
+  ticketPrice Decimal  @default(0)
+  ticketQuantity Int   @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      Int
+  
+  // Relations
+  user        User     @relation(fields: [userId], references: [id])
+  tickets     Ticket[]
+}
+
+model Ticket {
+  id           Int      @id @default(autoincrement())
+  eventId      Int
+  userId       Int
+  purchaseDate DateTime @default(now())
+  price        Decimal
+  status       String   @default("active") // active, used, cancelled
+  walletType   String   // Tipe wallet yang digunakan untuk pembayaran
+  isSent       Boolean  @default(false)
+  sentAt       DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  event        Event    @relation(fields: [eventId], references: [id])
+  user         User     @relation(fields: [userId], references: [id])
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  type      String   // 'TICKET_PURCHASED', 'TICKET_SOLD', 'WALLET_TOPUP', 'EVENT_CREATED'
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id])
+}

@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Ticket" ALTER COLUMN "purchaseDate" SET DEFAULT CURRENT_TIMESTAMP;
