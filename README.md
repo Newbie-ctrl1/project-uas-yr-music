@@ -10,4 +10,4 @@ DATABASE_URL=
 
 JWT_SECRET=
 
-untuk konfigurasi env nya
+kalau mau pakai tinggal migrasi database pakai prisma dan untuk konfigurasi env nya diatas
